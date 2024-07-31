@@ -1,0 +1,43 @@
+{
+  "name": "@dg/umami-react",
+  "version": "0.0.1",
+  "private": false,
+  "description": "The Umami Analytics Loader is a lightweight script that enables you to easily integrate Umami Analytics into your website. Umami is a simple, open-source website analytics tool that provides valuable insights into your website's traffic without compromising privacy.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "release": "pnpm run build && changeset publish"
+  },
+  "publishConfig": {
+    "@danielgietmann:registry": "https://npm.pkg.github.com"
+  },
+  "keywords": [
+    "React",
+    "Umami",
+    "Analytics"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DanielGietmann/react-umami.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DanielGietmann/react-umami/issues"
+  },
+  "author": "Daniel Gietmann <hello@danielgietmann.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@types/react": "^18.2.64",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.2"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

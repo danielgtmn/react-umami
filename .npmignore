@@ -1,0 +1,10 @@
+/node_modules
+/source
+.DS_Store
+/.idea
+/.changeset
+/src
+/.github
+
+tsconfig.json
+tsup.config.ts
