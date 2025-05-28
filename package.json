@@ -26,12 +26,12 @@
   "author": "Daniel Gietmann <hello@danielgtmn.com>",
   "license": "MIT",
   "devDependencies": {
-    "@changesets/cli": "^2.28.1",
-    "@types/react": "^18.3.20",
+    "@changesets/cli": "^2.29.4",
+    "@types/react": "^18.3.23",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tsup": "^8.4.0",
-    "typescript": "^5.8.2"
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
   },
   "peerDependencies": {
     "react": "^18.2.0",
