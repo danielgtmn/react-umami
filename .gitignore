@@ -125,8 +125,23 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Project specific
 /node_modules
 /dist
 .DS_Store
 /.idea
 .idea
+
+# Development and build artifacts
+*.min.js
+*.min.css
+
+# Test files
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# Package manager lockfiles (keep pnpm-lock.yaml)
+yarn.lock
+package-lock.json

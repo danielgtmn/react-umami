@@ -1,10 +1,59 @@
+# Dependencies
 /node_modules
-/source
-.DS_Store
-/.idea
-/.changeset
-/src
-/.github
 
+# Source files (only dist should be included)
+/src
+
+# Development configuration files
 tsconfig.json
 tsup.config.ts
+.prettierrc
+.eslintrc.json
+eslint.config.js
+.eslintcache
+
+# Build tools and CI
+/.github
+/.changeset
+
+# Development artifacts
+.DS_Store
+/.idea
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Cache directories
+.cache
+.parcel-cache
+*.tsbuildinfo
+
+# Package manager files
+yarn.lock
+package-lock.json
+
+# Editor directories and files
+.vscode-test
+*.swp
+*.swo
+*~
+
+# OS generated files
+Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
