@@ -1,6 +1,6 @@
 {
   "name": "@danielgtmn/umami-react",
-  "version": "0.0.3",
+  "version": "1.0.0",
   "private": false,
   "description": "The Umami Analytics Loader is a lightweight script that enables you to easily integrate Umami Analytics into your website. Umami is a simple, open-source website analytics tool that provides valuable insights into your website's traffic without compromising privacy.",
   "main": "./dist/index.js",
@@ -8,9 +8,10 @@
   "types": "./dist/index.d.ts",
   "type": "module",
   "files": [
-    "dist",
+    "dist/**/*",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "package.json"
   ],
   "homepage": "https://github.com/danielgtmn/react-umami#readme",
   "engines": {
@@ -20,6 +21,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "clean": "rimraf dist",
+    "format": "prettier --write src/**/*.{ts,tsx}",
+    "type-check": "tsc --noEmit",
     "prepare": "pnpm run build",
     "release": "pnpm run build && changeset publish"
   },
@@ -39,7 +42,15 @@
   "license": "MIT",
   "devDependencies": {
     "@changesets/cli": "^2.29.4",
+    "@eslint/js": "^9.30.1",
+    "@types/node": "^20.11.5",
     "@types/react": "^18.3.23",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "rimraf": "^5.0.5",

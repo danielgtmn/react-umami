@@ -3,16 +3,21 @@
     "strict": true,
     "noImplicitAny": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "strictNullChecks": true,
     "target": "ES2022",
-    "moduleResolution": "Node10",
-    "module": "CommonJS",
+    "moduleResolution": "node",
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
     "declaration": true,
     "isolatedModules": true,
     "noEmit": true,
     "outDir": "dist",
-    "jsx": "react"
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["src"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }

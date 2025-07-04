@@ -1,87 +1,214 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef } from 'react';
 
-const UmamiAnalytics = () => {
-    // @ts-ignore
-    const UmamiUrl = process.env.UMAMI_URL
-    // @ts-ignore
-    const UmamiId = process.env.UMAMI_ID
-    // @ts-ignore
-    const UmamiDebug = process.env.UMAMI_DEBUG || "false"
-    // @ts-ignore
-    const UmamiLazyLoad = process.env.UMAMI_LAZY_LOAD || "false"
+export interface UmamiAnalyticsProps {
+  /**
+   * The URL of your Umami instance
+   */
+  url?: string;
 
-    const [isLoaded, setIsLoaded] = useState(false);
+  /**
+   * Your website tracking ID
+   */
+  websiteId?: string;
 
-    useEffect(() => {
-        if (UmamiLazyLoad === "true" && !isLoaded) {
-            const loadScript = () => {
-                const script = document.createElement('script');
-                script.src = `${UmamiUrl}/script.js`;
-                script.defer = true;
-                script.setAttribute('data-website-id', UmamiId);
-                document.body.appendChild(script);
-                setIsLoaded(true);
-            };
+  /**
+   * Enable debug logging
+   * @default false
+   */
+  debug?: boolean;
 
-            // Load script when user interacts with the page
-            const handleInteraction = () => {
-                loadScript();
-                document.removeEventListener('mousemove', handleInteraction);
-                document.removeEventListener('scroll', handleInteraction);
-                document.removeEventListener('click', handleInteraction);
-            };
+  /**
+   * Enable lazy loading of analytics script
+   * @default false
+   */
+  lazyLoad?: boolean;
 
-            document.addEventListener('mousemove', handleInteraction);
-            document.addEventListener('scroll', handleInteraction);
-            document.addEventListener('click', handleInteraction);
+  /**
+   * Only load analytics in production
+   * @default true
+   */
+  onlyInProduction?: boolean;
 
-            return () => {
-                document.removeEventListener('mousemove', handleInteraction);
-                document.removeEventListener('scroll', handleInteraction);
-                document.removeEventListener('click', handleInteraction);
-            };
-        }
-    }, [UmamiLazyLoad, UmamiUrl, UmamiId, isLoaded]);
+  /**
+   * Custom domains for the analytics script
+   */
+  domains?: string[];
 
-    if(UmamiDebug === "true"){
-        console.warn("The Umami Analytics is in Debug Mode")
-        console.log("The Umami Url is", UmamiUrl);
-        console.log("The Umami ID is", UmamiId);
-        console.log("Lazy Loading is", UmamiLazyLoad);
-    }
-
-    if (UmamiUrl === undefined) {
-        if(UmamiDebug === "true"){
-            console.error("The Umami Url is Not Set");
-        }
-        throw new Error("The Umami Url is Not Set");
-    }
-    if (UmamiId === undefined) {
-        if(UmamiDebug === "true"){
-            console.error("The Umami ID is Not Set");
-        }
-        throw new Error("The Umami ID is Not Set");
-    }
-
-    // @ts-ignore
-    if (process.env.NODE_ENV === 'production') {
-        if (UmamiLazyLoad === "true") {
-            return null; // Script will be loaded via useEffect
-        }
-        return (
-            <script
-                defer
-                src={UmamiUrl+"/script.js"}
-                data-website-id={UmamiId}
-            >
-            </script>
-        )
-    } else {
-        if(UmamiDebug === "true"){
-            console.log("The Umami Analytics is not count clicks in Non Production - But Working");
-        }
-        return null;
-    }
+  /**
+   * Additional script attributes
+   */
+  scriptAttributes?: Record<string, string>;
 }
 
-export default UmamiAnalytics
+export interface UmamiConfig {
+  url: string;
+  websiteId: string;
+  debug: boolean;
+  lazyLoad: boolean;
+  onlyInProduction: boolean;
+  domains?: string[];
+  scriptAttributes?: Record<string, string>;
+}
+
+const getEnvVar = (key: string, defaultValue: string = ''): string => {
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key] || defaultValue;
+  }
+  return defaultValue;
+};
+
+const createUmamiConfig = (props: UmamiAnalyticsProps): UmamiConfig => {
+  const envUrl = getEnvVar('UMAMI_URL');
+  const envId = getEnvVar('UMAMI_ID');
+  const envDebug = getEnvVar('UMAMI_DEBUG', 'false');
+  const envLazyLoad = getEnvVar('UMAMI_LAZY_LOAD', 'false');
+
+  return {
+    url: props.url || envUrl,
+    websiteId: props.websiteId || envId,
+    debug: props.debug ?? envDebug === 'true',
+    lazyLoad: props.lazyLoad ?? envLazyLoad === 'true',
+    onlyInProduction: props.onlyInProduction ?? true,
+    domains: props.domains,
+    scriptAttributes: props.scriptAttributes,
+  };
+};
+
+const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = props => {
+  const isLoadedRef = useRef(false);
+  const config = createUmamiConfig(props);
+
+  const debugLog = (message: string, ...args: any[]) => {
+    if (config.debug) {
+      console.log(`[Umami Analytics] ${message}`, ...args);
+    }
+  };
+
+  const debugWarn = (message: string, ...args: any[]) => {
+    if (config.debug) {
+      console.warn(`[Umami Analytics] ${message}`, ...args);
+    }
+  };
+
+  const debugError = (message: string, ...args: any[]) => {
+    if (config.debug) {
+      console.error(`[Umami Analytics] ${message}`, ...args);
+    }
+  };
+
+  const validateConfig = (): boolean => {
+    if (!config.url) {
+      debugError('UMAMI_URL is not set');
+      return false;
+    }
+    if (!config.websiteId) {
+      debugError('UMAMI_ID is not set');
+      return false;
+    }
+    return true;
+  };
+
+  const loadScript = () => {
+    if (isLoadedRef.current) {
+      debugLog('Script already loaded, skipping');
+      return;
+    }
+
+    if (!validateConfig()) {
+      debugError('Invalid configuration, skipping script load');
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `${config.url}/script.js`;
+    script.defer = true;
+    script.setAttribute('data-website-id', config.websiteId);
+
+    // Add custom domains if provided
+    if (config.domains && config.domains.length > 0) {
+      script.setAttribute('data-domains', config.domains.join(','));
+    }
+
+    // Add custom attributes if provided
+    if (config.scriptAttributes) {
+      Object.entries(config.scriptAttributes).forEach(([key, value]) => {
+        script.setAttribute(key, value);
+      });
+    }
+
+    document.head.appendChild(script);
+    isLoadedRef.current = true;
+    debugLog('Analytics script loaded successfully');
+  };
+
+  const setupLazyLoading = () => {
+    const handleInteraction = () => {
+      loadScript();
+      document.removeEventListener('mousemove', handleInteraction);
+      document.removeEventListener('scroll', handleInteraction);
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+
+    document.addEventListener('mousemove', handleInteraction, { once: true });
+    document.addEventListener('scroll', handleInteraction, { once: true });
+    document.addEventListener('click', handleInteraction, { once: true });
+    document.addEventListener('keydown', handleInteraction, { once: true });
+
+    debugLog('Lazy loading setup completed');
+
+    return () => {
+      document.removeEventListener('mousemove', handleInteraction);
+      document.removeEventListener('scroll', handleInteraction);
+      document.removeEventListener('click', handleInteraction);
+      document.removeEventListener('keydown', handleInteraction);
+    };
+  };
+
+  useEffect(() => {
+    if (config.debug) {
+      debugWarn('Debug mode is enabled');
+      debugLog('Configuration:', {
+        url: config.url,
+        websiteId: config.websiteId,
+        lazyLoad: config.lazyLoad,
+        onlyInProduction: config.onlyInProduction,
+      });
+    }
+
+    // Check if we should load in current environment
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    if (config.onlyInProduction && isDevelopment) {
+      debugLog('Skipping analytics in development mode');
+      return;
+    }
+
+    if (!validateConfig()) {
+      debugWarn('Invalid configuration, component will not load analytics');
+      return;
+    }
+
+    if (config.lazyLoad) {
+      debugLog('Setting up lazy loading');
+      return setupLazyLoading();
+    } else {
+      debugLog('Loading analytics script immediately');
+      loadScript();
+    }
+  }, [config.url, config.websiteId, config.lazyLoad, config.onlyInProduction]);
+
+  return null;
+};
+
+// Hook for programmatic event tracking
+export const useUmami = () => {
+  const track = (eventName: string, eventData?: Record<string, any>) => {
+    if (typeof window !== 'undefined' && (window as any).umami) {
+      (window as any).umami.track(eventName, eventData);
+    }
+  };
+
+  return { track };
+};
+
+export default UmamiAnalytics;
