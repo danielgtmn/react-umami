@@ -76,8 +76,6 @@ export default [
       'no-console': 'off',
       // Allow any type for window.umami typing
       '@typescript-eslint/no-explicit-any': 'off',
-      // Temporarily allow missing dependencies for useEffect
-      'react-hooks/exhaustive-deps': 'off',
     },
   },
 ];
