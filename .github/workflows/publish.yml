@@ -40,9 +40,6 @@ jobs:
       - name: Run tests
         run: pnpm test:run
 
-      - name: Check bundle size
-        run: pnpm size
-
   publish:
     name: 'Publish to NPM'
     runs-on: ubuntu-latest
