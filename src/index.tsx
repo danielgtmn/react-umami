@@ -196,7 +196,7 @@ const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = React.memo(props => {
       debugLog('Loading analytics script immediately');
       loadScript();
     }
-  }, [config.url, config.websiteId, config.lazyLoad, config.onlyInProduction]);
+  }, [config]);
 
   return null;
 });
