@@ -235,19 +235,136 @@ pnpm dev
 # Run linting
 pnpm lint
 
+# Auto-fix linting issues
+pnpm lint:fix
+
 # Format code
 pnpm format
 
 # Type check
 pnpm type-check
 
+# Run tests
+pnpm test
+
+# Run tests once
+pnpm test:run
+
+# Run tests with coverage
+pnpm test:coverage
+
+# Run tests in watch mode
+pnpm test:watch
+
+# Check bundle size
+pnpm size
+
+# Analyze bundle
+pnpm analyze
+
 # Build for production
 pnpm build
+
+# Clean build artifacts
+pnpm clean
 ```
+
+## Development Workflow
+
+This project uses modern development tools to ensure code quality:
+
+### Git Hooks (Husky)
+Git hooks automatically run quality checks before commits:
+- **Pre-commit**: TypeScript check, linting, and tests
+- **Commit-msg**: Validates commit message format
+
+### Commit Convention (Commitlint)
+Commits follow [Conventional Commits](https://conventionalcommits.org/) format:
+
+```bash
+type(scope): description
+
+# Examples:
+feat: add new tracking feature
+fix: resolve lazy loading bug
+docs: update README
+test: add component tests
+```
+
+**Allowed types**: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`
+
+## Testing
+
+This project uses [Vitest](https://vitest.dev/) for testing with [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/).
+
+```bash
+# Run tests
+pnpm test
+
+# Run tests with coverage
+pnpm test:coverage
+
+# Run tests in watch mode
+pnpm test:watch
+```
+
+## CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **CI Pipeline** (`.github/workflows/ci.yml`): Runs on every push/PR to main
+  - Tests across multiple Node.js versions (18.x, 20.x, 22.x)
+  - Linting and type checking
+  - Bundle size monitoring
+  - Test coverage reporting
+
+- **Release Pipeline** (`.github/workflows/publish.yml`): Runs on releases
+  - Runs full test suite before publishing
+  - Publishes to NPM with public access
+
+## Bundle Analysis
+
+The project includes bundle size monitoring and analysis:
+
+```bash
+# Check current bundle sizes
+pnpm size
+
+# Analyze bundle composition
+pnpm analyze
+```
+
+Bundle size limits:
+- ESM: ≤ 3 KB (gzipped)
+- CJS: ≤ 3.5 KB (gzipped)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please ensure:
+
+1. **Follow commit conventions**: Use [Conventional Commits](https://conventionalcommits.org/) format
+2. **Quality checks**: Git hooks automatically run:
+   - TypeScript type checking
+   - ESLint linting
+   - Test execution
+   - Commit message validation
+3. **Manual verification**:
+   - All tests pass: `pnpm test:run`
+   - Code is linted: `pnpm lint`
+   - Bundle size is within limits: `pnpm size`
+   - TypeScript types are correct: `pnpm type-check`
+
+### Development Setup
+
+```bash
+# Install dependencies
+pnpm install
+
+# Git hooks are automatically set up via prepare script
+# If needed manually: pnpm prepare
+```
+
+Please feel free to submit a Pull Request!
 
 ## License
 
