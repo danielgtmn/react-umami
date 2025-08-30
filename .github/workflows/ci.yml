@@ -1,32 +1,34 @@
-name: 'Release & Publish'
+name: 'CI'
 
 on:
-  release:
-    types: [published]
-
-permissions:
-  contents: read
-  packages: write
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   test:
-    name: 'Run Tests'
+    name: 'Test & Lint'
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v2
         with:
-          version: latest
+          version: 8
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -43,34 +45,30 @@ jobs:
       - name: Check bundle size
         run: pnpm size
 
-  publish:
-    name: 'Publish to NPM'
+      - name: Build
+        run: pnpm build
+
+  test-coverage:
+    name: 'Test Coverage'
     runs-on: ubuntu-latest
-    needs: test
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v2
         with:
-          version: latest
+          version: 8
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
-
-      - name: Publish to NPM
-        run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Run tests with coverage
+        run: pnpm test:coverage

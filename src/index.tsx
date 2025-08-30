@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 
 export interface UmamiAnalyticsProps {
   /**
@@ -74,29 +75,29 @@ const createUmamiConfig = (props: UmamiAnalyticsProps): UmamiConfig => {
   };
 };
 
-const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = props => {
+const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = React.memo(props => {
   const isLoadedRef = useRef(false);
-  const config = createUmamiConfig(props);
+  const config = useMemo(() => createUmamiConfig(props), [props]);
 
-  const debugLog = (message: string, ...args: any[]) => {
+  const debugLog = useCallback((message: string, ...args: any[]) => {
     if (config.debug) {
       console.log(`[Umami Analytics] ${message}`, ...args);
     }
-  };
+  }, [config.debug]);
 
-  const debugWarn = (message: string, ...args: any[]) => {
+  const debugWarn = useCallback((message: string, ...args: any[]) => {
     if (config.debug) {
       console.warn(`[Umami Analytics] ${message}`, ...args);
     }
-  };
+  }, [config.debug]);
 
-  const debugError = (message: string, ...args: any[]) => {
+  const debugError = useCallback((message: string, ...args: any[]) => {
     if (config.debug) {
       console.error(`[Umami Analytics] ${message}`, ...args);
     }
-  };
+  }, [config.debug]);
 
-  const validateConfig = (): boolean => {
+  const validateConfig = useCallback((): boolean => {
     if (!config.url) {
       debugError('UMAMI_URL is not set');
       return false;
@@ -106,9 +107,9 @@ const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = props => {
       return false;
     }
     return true;
-  };
+  }, [config.url, config.websiteId, debugError]);
 
-  const loadScript = () => {
+  const loadScript = useCallback(() => {
     if (isLoadedRef.current) {
       debugLog('Script already loaded, skipping');
       return;
@@ -139,9 +140,9 @@ const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = props => {
     document.head.appendChild(script);
     isLoadedRef.current = true;
     debugLog('Analytics script loaded successfully');
-  };
+  }, [config.url, config.websiteId, config.domains, config.scriptAttributes, debugLog, debugError, validateConfig]);
 
-  const setupLazyLoading = () => {
+  const setupLazyLoading = useCallback(() => {
     const handleInteraction = () => {
       loadScript();
       document.removeEventListener('mousemove', handleInteraction);
@@ -163,7 +164,7 @@ const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = props => {
       document.removeEventListener('click', handleInteraction);
       document.removeEventListener('keydown', handleInteraction);
     };
-  };
+  }, [loadScript, debugLog]);
 
   useEffect(() => {
     if (config.debug) {
@@ -198,17 +199,17 @@ const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = props => {
   }, [config.url, config.websiteId, config.lazyLoad, config.onlyInProduction]);
 
   return null;
-};
+});
 
 // Hook for programmatic event tracking
 export const useUmami = () => {
-  const track = (eventName: string, eventData?: Record<string, any>) => {
+  const track = useCallback((eventName: string, eventData?: Record<string, any>) => {
     if (typeof window !== 'undefined' && (window as any).umami) {
       (window as any).umami.track(eventName, eventData);
     }
-  };
+  }, []);
 
-  return { track };
+  return useMemo(() => ({ track }), [track]);
 };
 
 export default UmamiAnalytics;
