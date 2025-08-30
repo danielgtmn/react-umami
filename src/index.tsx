@@ -77,7 +77,18 @@ const createUmamiConfig = (props: UmamiAnalyticsProps): UmamiConfig => {
 
 const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = React.memo(props => {
   const isLoadedRef = useRef(false);
-  const config = useMemo(() => createUmamiConfig(props), [props]);
+  const config = useMemo(
+    () => createUmamiConfig(props),
+    [
+      props.url,
+      props.websiteId,
+      props.debug,
+      props.lazyLoad,
+      props.onlyInProduction,
+      props.domains,
+      props.scriptAttributes,
+    ]
+  );
 
   const debugLog = useCallback((message: string, ...args: any[]) => {
     if (config.debug) {
