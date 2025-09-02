@@ -11,6 +11,8 @@ A lightweight, privacy-focused React component for integrating Umami Analytics i
 - 📦 Zero runtime dependencies
 - 🔍 Full TypeScript support
 - 🎯 Custom event tracking hook
+- 📊 Manual pageview tracking with UTM support
+- 🔄 Async UTM parameter fetching
 - 🌐 Custom domain support
 - ⚙️ Configurable script attributes
 
@@ -164,6 +166,173 @@ function MyComponent() {
     </button>
   );
 }
+```
+
+## Manual Pageview Tracking
+
+The `useUmami` hook now provides comprehensive pageview tracking capabilities, perfect for scenarios where you need to disable auto-tracking and manually control pageview events with custom UTM parameters.
+
+### Basic Pageview Tracking
+
+```tsx
+import { useUmami } from '@danielgtmn/umami-react';
+
+function MyComponent() {
+  const { trackPageview } = useUmami();
+
+  const handlePageview = () => {
+    trackPageview({
+      url: '/custom-page',
+      title: 'Custom Page Title',
+      referrer: document.referrer,
+    });
+  };
+
+  return (
+    <button onClick={handlePageview}>
+      Track Pageview
+    </button>
+  );
+}
+```
+
+### Pageview Tracking with UTM Parameters
+
+```tsx
+import { useUmami } from '@danielgtmn/umami-react';
+
+function MyComponent() {
+  const { trackPageviewWithUTM } = useUmami();
+
+  const handleUTMPageview = () => {
+    trackPageviewWithUTM({
+      utm_source: 'newsletter',
+      utm_medium: 'email',
+      utm_campaign: 'spring-sale',
+      utm_term: 'discount',
+      utm_content: 'header-link',
+    });
+  };
+
+  return (
+    <button onClick={handleUTMPageview}>
+      Track UTM Pageview
+    </button>
+  );
+}
+```
+
+### Async UTM Parameter Fetching
+
+For scenarios where you need to fetch UTM parameters from your backend using a unique ID:
+
+```tsx
+import { useUmami, UTMFetcher } from '@danielgtmn/umami-react';
+
+function MyComponent() {
+  const { trackPageviewAsync } = useUmami();
+
+  // Define your UTM fetcher function
+  const fetchUTMData: UTMFetcher = async (utmId: string) => {
+    const response = await fetch(`/api/utm/${utmId}`);
+    const data = await response.json();
+    
+    return {
+      utm_source: data.source,
+      utm_medium: data.medium,
+      utm_campaign: data.campaign,
+      utm_term: data.term,
+      utm_content: data.content,
+    };
+  };
+
+  const handleAsyncPageview = async () => {
+    // This will fetch UTM data from your backend and track the pageview
+    await trackPageviewAsync('unique-utm-id-123', fetchUTMData, {
+      // Optional additional data
+      custom_property: 'custom_value',
+    });
+  };
+
+  return (
+    <button onClick={handleAsyncPageview}>
+      Track Async UTM Pageview
+    </button>
+  );
+}
+```
+
+### Complete useUmami Hook API
+
+The `useUmami` hook provides the following methods:
+
+```tsx
+const {
+  track,                    // Original event tracking
+  trackPageview,           // Manual pageview tracking
+  trackPageviewWithUTM,    // Pageview with UTM parameters
+  trackPageviewAsync       // Async UTM fetching + pageview
+} = useUmami();
+```
+
+### TypeScript Support for Pageview Tracking
+
+```tsx
+import { PageviewData, UTMFetcher } from '@danielgtmn/umami-react';
+
+// PageviewData interface
+const pageviewData: PageviewData = {
+  url: '/custom-page',
+  title: 'Page Title',
+  referrer: 'https://example.com',
+  utm_source: 'google',
+  utm_medium: 'cpc',
+  utm_campaign: 'summer-sale',
+  utm_term: 'shoes',
+  utm_content: 'ad-1',
+  utm_id: 'unique-id-123',
+  // Any additional custom properties
+  custom_field: 'custom_value',
+};
+
+// UTMFetcher function type
+const myUTMFetcher: UTMFetcher = async (utmId: string) => {
+  // Your implementation
+  return {
+    utm_source: 'backend-source',
+    utm_medium: 'backend-medium',
+    // ... other UTM parameters
+  };
+};
+```
+
+### Disabling Auto-Tracking
+
+When using manual pageview tracking, you might want to disable Umami's automatic pageview tracking by adding the `data-auto-track="false"` attribute:
+
+```tsx
+<UmamiAnalytics
+  url="https://analytics.example.com"
+  websiteId="your-website-id"
+  scriptAttributes={{
+    'data-auto-track': 'false'
+  }}
+/>
+```
+
+### Error Handling
+
+The async UTM fetching includes built-in error handling. If the UTM fetcher fails, it will:
+
+1. Log an error to the console (in debug mode)
+2. Fall back to basic pageview tracking with the provided `utm_id`
+3. Include any additional data you provided
+
+```tsx
+// This will gracefully handle network errors
+await trackPageviewAsync('utm-id', failingFetcher, {
+  fallback_source: 'direct',
+});
 ```
 
 ## TypeScript Support

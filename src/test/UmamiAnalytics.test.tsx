@@ -1,17 +1,15 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
-import UmamiAnalytics, { useUmami } from '../index';
+import UmamiAnalytics, { useUmami, UTMFetcher } from '../index';
 
 // Mock window.umami
 const mockUmami = {
   track: vi.fn(),
 };
 
-Object.defineProperty(window, 'umami', {
-  writable: true,
-  value: mockUmami,
-});
+// Simple assignment instead of defineProperty
+(window as any).umami = mockUmami;
 
 // Test component for useUmami hook
 function TestComponent() {
@@ -23,7 +21,45 @@ function TestComponent() {
 
   return (
     <div>
-      <button onClick={handleClick}>Track Event</button>
+      <button type="button" onClick={handleClick}>Track Event</button>
+    </div>
+  );
+}
+
+// Test component for pageview tracking
+function PageviewTestComponent() {
+  const { trackPageview, trackPageviewAsync, trackPageviewWithUTM } = useUmami();
+
+  const handlePageview = () => {
+    trackPageview({ url: '/test-page', title: 'Test Page' });
+  };
+
+  const handlePageviewWithUTM = () => {
+    trackPageviewWithUTM({
+      utm_source: 'test-source',
+      utm_medium: 'test-medium',
+      utm_campaign: 'test-campaign',
+    });
+  };
+
+  const handleAsyncPageview = async () => {
+    const mockFetcher: UTMFetcher = async (_utmId: string) => {
+      void _utmId; // Mark as used for test purposes
+      return {
+        utm_source: 'backend-source',
+        utm_medium: 'backend-medium',
+        utm_campaign: 'backend-campaign',
+      };
+    };
+
+    await trackPageviewAsync('test-utm-id', mockFetcher);
+  };
+
+  return (
+    <div>
+      <button type="button" onClick={handlePageview}>Track Pageview</button>
+      <button type="button" onClick={handlePageviewWithUTM}>Track Pageview with UTM</button>
+      <button type="button" onClick={handleAsyncPageview}>Track Async Pageview</button>
     </div>
   );
 }
@@ -35,6 +71,10 @@ describe('UmamiAnalytics', () => {
 
     // Reset document head
     document.head.innerHTML = '';
+
+    // Reset umami mock
+    mockUmami.track.mockClear();
+    (window as any).umami = mockUmami;
 
     // Reset process.env
     Object.defineProperty(process, 'env', {
@@ -265,6 +305,156 @@ describe('UmamiAnalytics', () => {
       expect(() => {
         render(<TestComponent />);
       }).not.toThrow();
+    });
+  });
+
+  describe('Pageview Tracking', () => {
+    it('provides pageview tracking functions', () => {
+      render(<PageviewTestComponent />);
+
+      const pageviewButton = screen.getByRole('button', { name: /track pageview$/i });
+      const utmButton = screen.getByRole('button', { name: /track pageview with utm/i });
+      const asyncButton = screen.getByRole('button', { name: /track async pageview/i });
+
+      expect(pageviewButton).toBeInTheDocument();
+      expect(utmButton).toBeInTheDocument();
+      expect(asyncButton).toBeInTheDocument();
+    });
+
+    it('calls window.umami.track with $pageview event when trackPageview is called', async () => {
+      const user = userEvent.setup();
+
+      render(<PageviewTestComponent />);
+
+      const button = screen.getByRole('button', { name: /track pageview$/i });
+      await user.click(button);
+
+      expect(mockUmami.track).toHaveBeenCalledWith('$pageview', {
+        url: '/test-page',
+        title: 'Test Page',
+        referrer: '',
+      });
+    });
+
+    it('calls window.umami.track with UTM parameters when trackPageviewWithUTM is called', async () => {
+      const user = userEvent.setup();
+
+      render(<PageviewTestComponent />);
+
+      const button = screen.getByRole('button', { name: /track pageview with utm/i });
+      await user.click(button);
+
+      expect(mockUmami.track).toHaveBeenCalledWith('$pageview', expect.objectContaining({
+        utm_source: 'test-source',
+        utm_medium: 'test-medium',
+        utm_campaign: 'test-campaign',
+      }));
+    });
+
+    it('handles async UTM fetching with trackPageviewAsync', async () => {
+      const user = userEvent.setup();
+
+      render(<PageviewTestComponent />);
+
+      const button = screen.getByRole('button', { name: /track async pageview/i });
+      await user.click(button);
+
+      // Wait for async operation to complete
+      await waitFor(() => {
+        expect(mockUmami.track).toHaveBeenCalledWith('$pageview', expect.objectContaining({
+          utm_id: 'test-utm-id',
+          utm_source: 'backend-source',
+          utm_medium: 'backend-medium',
+          utm_campaign: 'backend-campaign',
+        }));
+      });
+    });
+
+    it('handles UTM fetcher errors gracefully', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      
+      const FailingPageviewComponent = () => {
+        const { trackPageviewAsync } = useUmami();
+
+        const handleFailingAsync = async () => {
+          const failingFetcher: UTMFetcher = async () => {
+            throw new Error('Network error');
+          };
+
+          await trackPageviewAsync('test-utm-id', failingFetcher, { title: 'Fallback Page' });
+        };
+
+        return (
+          // biome-ignore lint/a11y/useButtonType: test button
+<button type="button" onClick={handleFailingAsync}>Track Failing Async</button>
+        );
+      };
+
+      const user = userEvent.setup();
+      render(<FailingPageviewComponent />);
+
+      const button = screen.getByRole('button', { name: /track failing async/i });
+      await user.click(button);
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith('[Umami Analytics] Error fetching UTM data:', expect.any(Error));
+        expect(mockUmami.track).toHaveBeenCalledWith('$pageview', expect.objectContaining({
+          utm_id: 'test-utm-id',
+          title: 'Fallback Page',
+        }));
+      });
+
+      consoleSpy.mockRestore();
+    });
+
+    it('uses default values for url, title, and referrer when not provided', async () => {
+      const SimplePageviewComponent = () => {
+        const { trackPageview } = useUmami();
+
+        const handleSimplePageview = () => {
+          trackPageview();
+        };
+
+        return (
+          <button type="button" onClick={handleSimplePageview}>Track Simple Pageview</button>
+        );
+      };
+
+      const user = userEvent.setup();
+      render(<SimplePageviewComponent />);
+
+      const button = screen.getByRole('button', { name: /track simple pageview/i });
+      await user.click(button);
+
+      expect(mockUmami.track).toHaveBeenCalledWith('$pageview', expect.objectContaining({
+        url: expect.any(String),
+        title: expect.any(String),
+        referrer: expect.any(String),
+      }));
+    });
+
+    it('handles missing window.umami gracefully for pageview tracking', () => {
+      // Remove umami from window
+      (window as any).umami = undefined;
+
+      const SafePageviewComponent = () => {
+        const { trackPageview } = useUmami();
+
+        const handleSafePageview = () => {
+          trackPageview({ url: '/safe-page' });
+        };
+
+        return (
+          <button type="button" onClick={handleSafePageview}>Track Safe Pageview</button>
+        );
+      };
+
+      expect(() => {
+        render(<SafePageviewComponent />);
+      }).not.toThrow();
+
+      // Restore umami for other tests
+      (window as any).umami = mockUmami;
     });
   });
 });
