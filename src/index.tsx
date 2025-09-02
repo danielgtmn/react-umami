@@ -77,18 +77,7 @@ const createUmamiConfig = (props: UmamiAnalyticsProps): UmamiConfig => {
 
 const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = React.memo(props => {
   const isLoadedRef = useRef(false);
-  const config = useMemo(
-    () => createUmamiConfig(props),
-    [
-      props.url,
-      props.websiteId,
-      props.debug,
-      props.lazyLoad,
-      props.onlyInProduction,
-      props.domains,
-      props.scriptAttributes,
-    ]
-  );
+  const config = createUmamiConfig(props);
 
   const debugLog = useCallback((message: string, ...args: any[]) => {
     if (config.debug) {
@@ -207,12 +196,30 @@ const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = React.memo(props => {
       debugLog('Loading analytics script immediately');
       loadScript();
     }
-  }, [config.debug, config.url, config.websiteId, config.lazyLoad, config.onlyInProduction]);
+  }, [config.debug, config.url, config.websiteId, config.lazyLoad, config.onlyInProduction, debugLog, debugWarn, validateConfig, setupLazyLoading, loadScript]);
 
   return null;
 });
 
-// Hook for programmatic event tracking
+// Types for pageview tracking
+export interface PageviewData {
+  url?: string;
+  title?: string;
+  referrer?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  utm_id?: string;
+  [key: string]: any;
+}
+
+
+// eslint-disable-next-line no-unused-vars
+export type UTMFetcher = (utmId: string) => Promise<Partial<PageviewData>>;
+
+// Hook for programmatic event and pageview tracking
 export const useUmami = () => {
   const track = useCallback((eventName: string, eventData?: Record<string, any>) => {
     if (typeof window !== 'undefined' && (window as any).umami) {
@@ -220,7 +227,67 @@ export const useUmami = () => {
     }
   }, []);
 
-  return useMemo(() => ({ track }), [track]);
+  const trackPageview = useCallback((pageviewData?: PageviewData) => {
+    if (typeof window !== 'undefined' && (window as any).umami) {
+      const data = {
+        url: pageviewData?.url || window.location.pathname + window.location.search,
+        title: pageviewData?.title || document.title,
+        referrer: pageviewData?.referrer || document.referrer,
+        ...pageviewData,
+      };
+      
+      // Use umami's track method with pageview event
+      if (typeof (window as any).umami.track === 'function') {
+        (window as any).umami.track('$pageview', data);
+      }
+    }
+  }, []);
+
+  const trackPageviewAsync = useCallback(async (
+    utmId: string,
+    utmFetcher: UTMFetcher,
+    additionalData?: Partial<PageviewData>
+  ) => {
+    try {
+      const utmData = await utmFetcher(utmId);
+      const pageviewData: PageviewData = {
+        url: window.location.pathname + window.location.search,
+        title: document.title,
+        referrer: document.referrer,
+        utm_id: utmId,
+        ...utmData,
+        ...additionalData,
+      };
+      
+      trackPageview(pageviewData);
+    } catch (error) {
+      console.error('[Umami Analytics] Error fetching UTM data:', error);
+      // Fallback to basic pageview tracking
+      trackPageview({
+        utm_id: utmId,
+        ...additionalData,
+      });
+    }
+  }, [trackPageview]);
+
+  const trackPageviewWithUTM = useCallback((utmParams: Partial<PageviewData>, additionalData?: Partial<PageviewData>) => {
+    const pageviewData: PageviewData = {
+      url: window.location.pathname + window.location.search,
+      title: document.title,
+      referrer: document.referrer,
+      ...utmParams,
+      ...additionalData,
+    };
+    
+    trackPageview(pageviewData);
+  }, [trackPageview]);
+
+  return useMemo(() => ({
+    track,
+    trackPageview,
+    trackPageviewAsync,
+    trackPageviewWithUTM
+  }), [track, trackPageview, trackPageviewAsync, trackPageviewWithUTM]);
 };
 
 export default UmamiAnalytics;
