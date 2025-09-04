@@ -229,16 +229,20 @@ export const useUmami = () => {
 
   const trackPageview = useCallback((pageviewData?: PageviewData) => {
     if (typeof window !== 'undefined' && (window as any).umami) {
-      const data = {
-        url: pageviewData?.url || window.location.pathname + window.location.search,
-        title: pageviewData?.title || document.title,
-        referrer: pageviewData?.referrer || document.referrer,
-        ...pageviewData,
-      };
-      
-      // Use umami's track method with pageview event
       if (typeof (window as any).umami.track === 'function') {
-        (window as any).umami.track('$pageview', data);
+        if (pageviewData && Object.keys(pageviewData).length > 0) {
+          // For pageviews with custom data, call track with the data
+          const data = {
+            url: pageviewData.url || window.location.pathname + window.location.search,
+            title: pageviewData.title || document.title,
+            referrer: pageviewData.referrer || document.referrer,
+            ...pageviewData,
+          };
+          (window as any).umami.track(data);
+        } else {
+          // For default pageviews, call track without arguments (defaults to current page)
+          (window as any).umami.track();
+        }
       }
     }
   }, []);
