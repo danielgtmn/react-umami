@@ -15,12 +15,28 @@ A lightweight, privacy-focused React component for integrating Umami Analytics i
 - 🔄 Async UTM parameter fetching
 - 🌐 Custom domain support
 - ⚙️ Configurable script attributes
+- ⚛️ **React 18 & 19 Support** - Compatible with both React 18.2+ and React 19
+
+## Requirements
+
+- **React**: 18.2+ or 19.0+
+- **Node.js**: 16.0+
 
 ## Installation
 
-Install using pnpm:
+The package is available on both NPM and GitHub Packages:
 
+### From NPM (recommended)
 ```bash
+pnpm add @danielgtmn/umami-react
+```
+
+### From GitHub Packages
+```bash
+# First, configure npm to use GitHub Packages for @danielgtmn scope
+echo "@danielgtmn:registry=https://npm.pkg.github.com" >> .npmrc
+
+# Then install
 pnpm add @danielgtmn/umami-react
 ```
 
@@ -170,7 +186,9 @@ function MyComponent() {
 
 ## Manual Pageview Tracking
 
-The `useUmami` hook now provides comprehensive pageview tracking capabilities, perfect for scenarios where you need to disable auto-tracking and manually control pageview events with custom UTM parameters.
+The `useUmami` hook provides comprehensive pageview tracking capabilities, perfect for scenarios where you need to disable auto-tracking and manually control pageview events with custom UTM parameters.
+
+> **Note**: This library correctly integrates with Umami's official tracking API. Pageviews are tracked using Umami's standard `umami.track()` method without custom event names.
 
 ### Basic Pageview Tracking
 
@@ -534,6 +552,7 @@ pnpm install
 ```
 
 Please feel free to submit a Pull Request!
+
 
 ## License
 
