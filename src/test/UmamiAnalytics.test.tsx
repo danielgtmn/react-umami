@@ -321,7 +321,7 @@ describe('UmamiAnalytics', () => {
       expect(asyncButton).toBeInTheDocument();
     });
 
-    it('calls window.umami.track with $pageview event when trackPageview is called', async () => {
+    it('calls window.umami.track with pageview data when trackPageview is called', async () => {
       const user = userEvent.setup();
 
       render(<PageviewTestComponent />);
@@ -329,7 +329,7 @@ describe('UmamiAnalytics', () => {
       const button = screen.getByRole('button', { name: /track pageview$/i });
       await user.click(button);
 
-      expect(mockUmami.track).toHaveBeenCalledWith('$pageview', {
+      expect(mockUmami.track).toHaveBeenCalledWith({
         url: '/test-page',
         title: 'Test Page',
         referrer: '',
@@ -344,7 +344,7 @@ describe('UmamiAnalytics', () => {
       const button = screen.getByRole('button', { name: /track pageview with utm/i });
       await user.click(button);
 
-      expect(mockUmami.track).toHaveBeenCalledWith('$pageview', expect.objectContaining({
+      expect(mockUmami.track).toHaveBeenCalledWith(expect.objectContaining({
         utm_source: 'test-source',
         utm_medium: 'test-medium',
         utm_campaign: 'test-campaign',
@@ -361,7 +361,7 @@ describe('UmamiAnalytics', () => {
 
       // Wait for async operation to complete
       await waitFor(() => {
-        expect(mockUmami.track).toHaveBeenCalledWith('$pageview', expect.objectContaining({
+        expect(mockUmami.track).toHaveBeenCalledWith(expect.objectContaining({
           utm_id: 'test-utm-id',
           utm_source: 'backend-source',
           utm_medium: 'backend-medium',
@@ -398,7 +398,7 @@ describe('UmamiAnalytics', () => {
 
       await waitFor(() => {
         expect(consoleSpy).toHaveBeenCalledWith('[Umami Analytics] Error fetching UTM data:', expect.any(Error));
-        expect(mockUmami.track).toHaveBeenCalledWith('$pageview', expect.objectContaining({
+        expect(mockUmami.track).toHaveBeenCalledWith(expect.objectContaining({
           utm_id: 'test-utm-id',
           title: 'Fallback Page',
         }));
@@ -426,11 +426,7 @@ describe('UmamiAnalytics', () => {
       const button = screen.getByRole('button', { name: /track simple pageview/i });
       await user.click(button);
 
-      expect(mockUmami.track).toHaveBeenCalledWith('$pageview', expect.objectContaining({
-        url: expect.any(String),
-        title: expect.any(String),
-        referrer: expect.any(String),
-      }));
+      expect(mockUmami.track).toHaveBeenCalledWith();
     });
 
     it('handles missing window.umami gracefully for pageview tracking', () => {
