@@ -282,16 +282,23 @@ export const useUmami = () => {
       ...utmParams,
       ...additionalData,
     };
-    
+
     trackPageview(pageviewData);
   }, [trackPageview]);
+
+  const identify = useCallback((uniqueId: string) => {
+    if (typeof window !== 'undefined' && (window as any).umami) {
+      (window as any).umami.identify(uniqueId);
+    }
+  }, []);
 
   return useMemo(() => ({
     track,
     trackPageview,
     trackPageviewAsync,
-    trackPageviewWithUTM
-  }), [track, trackPageview, trackPageviewAsync, trackPageviewWithUTM]);
+    trackPageviewWithUTM,
+    identify
+  }), [track, trackPageview, trackPageviewAsync, trackPageviewWithUTM, identify]);
 };
 
 export default UmamiAnalytics;
