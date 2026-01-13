@@ -6,6 +6,7 @@ import UmamiAnalytics, { useUmami, UTMFetcher } from '../index';
 // Mock window.umami
 const mockUmami = {
   track: vi.fn(),
+  identify: vi.fn(),
 };
 
 // Simple assignment instead of defineProperty
@@ -64,6 +65,19 @@ function PageviewTestComponent() {
   );
 }
 
+// Test component for identify
+function IdentifyTestComponent() {
+  const { identify } = useUmami();
+
+  const handleIdentify = () => {
+    identify('user-123');
+  };
+
+  return (
+    <button type="button" onClick={handleIdentify}>Identify User</button>
+  );
+}
+
 describe('UmamiAnalytics', () => {
   beforeEach(() => {
     // Clear all mocks
@@ -74,6 +88,7 @@ describe('UmamiAnalytics', () => {
 
     // Reset umami mock
     mockUmami.track.mockClear();
+    mockUmami.identify.mockClear();
     (window as any).umami = mockUmami;
 
     // Reset process.env
@@ -447,6 +462,50 @@ describe('UmamiAnalytics', () => {
 
       expect(() => {
         render(<SafePageviewComponent />);
+      }).not.toThrow();
+
+      // Restore umami for other tests
+      (window as any).umami = mockUmami;
+    });
+  });
+
+  describe('Session Identification', () => {
+    it('provides identify function', () => {
+      render(<IdentifyTestComponent />);
+
+      const button = screen.getByRole('button', { name: /identify user/i });
+      expect(button).toBeInTheDocument();
+    });
+
+    it('calls window.umami.identify when identify is called', async () => {
+      const user = userEvent.setup();
+
+      render(<IdentifyTestComponent />);
+
+      const button = screen.getByRole('button', { name: /identify user/i });
+      await user.click(button);
+
+      expect(mockUmami.identify).toHaveBeenCalledWith('user-123');
+    });
+
+    it('handles missing window.umami gracefully for identify', () => {
+      // Remove umami from window
+      (window as any).umami = undefined;
+
+      const SafeIdentifyComponent = () => {
+        const { identify } = useUmami();
+
+        const handleSafeIdentify = () => {
+          identify('user-456');
+        };
+
+        return (
+          <button type="button" onClick={handleSafeIdentify}>Safe Identify</button>
+        );
+      };
+
+      expect(() => {
+        render(<SafeIdentifyComponent />);
       }).not.toThrow();
 
       // Restore umami for other tests
