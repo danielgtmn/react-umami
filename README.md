@@ -280,6 +280,29 @@ function MyComponent() {
 }
 ```
 
+### Session Identification
+
+Assign a unique ID to the current session for user tracking:
+
+```tsx
+import { useUmami } from '@danielgtmn/umami-react';
+
+function MyComponent() {
+  const { identify } = useUmami();
+
+  const handleLogin = (userId: string) => {
+    // Assign the user ID to the current session
+    identify(userId);
+  };
+
+  return (
+    <button onClick={() => handleLogin('user-123')}>
+      Login
+    </button>
+  );
+}
+```
+
 ### Complete useUmami Hook API
 
 The `useUmami` hook provides the following methods:
@@ -289,7 +312,8 @@ const {
   track,                    // Original event tracking
   trackPageview,           // Manual pageview tracking
   trackPageviewWithUTM,    // Pageview with UTM parameters
-  trackPageviewAsync       // Async UTM fetching + pageview
+  trackPageviewAsync,      // Async UTM fetching + pageview
+  identify                 // Assign unique ID to session
 } = useUmami();
 ```
 
