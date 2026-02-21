@@ -79,23 +79,32 @@ const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = React.memo(props => {
   const isLoadedRef = useRef(false);
   const config = createUmamiConfig(props);
 
-  const debugLog = useCallback((message: string, ...args: any[]) => {
-    if (config.debug) {
-      console.log(`[Umami Analytics] ${message}`, ...args);
-    }
-  }, [config.debug]);
+  const debugLog = useCallback(
+    (message: string, ...args: any[]) => {
+      if (config.debug) {
+        console.log(`[Umami Analytics] ${message}`, ...args);
+      }
+    },
+    [config.debug]
+  );
 
-  const debugWarn = useCallback((message: string, ...args: any[]) => {
-    if (config.debug) {
-      console.warn(`[Umami Analytics] ${message}`, ...args);
-    }
-  }, [config.debug]);
+  const debugWarn = useCallback(
+    (message: string, ...args: any[]) => {
+      if (config.debug) {
+        console.warn(`[Umami Analytics] ${message}`, ...args);
+      }
+    },
+    [config.debug]
+  );
 
-  const debugError = useCallback((message: string, ...args: any[]) => {
-    if (config.debug) {
-      console.error(`[Umami Analytics] ${message}`, ...args);
-    }
-  }, [config.debug]);
+  const debugError = useCallback(
+    (message: string, ...args: any[]) => {
+      if (config.debug) {
+        console.error(`[Umami Analytics] ${message}`, ...args);
+      }
+    },
+    [config.debug]
+  );
 
   const validateConfig = useCallback((): boolean => {
     if (!config.url) {
@@ -140,7 +149,15 @@ const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = React.memo(props => {
     document.head.appendChild(script);
     isLoadedRef.current = true;
     debugLog('Analytics script loaded successfully');
-  }, [config.url, config.websiteId, config.domains, config.scriptAttributes, debugLog, debugError, validateConfig]);
+  }, [
+    config.url,
+    config.websiteId,
+    config.domains,
+    config.scriptAttributes,
+    debugLog,
+    debugError,
+    validateConfig,
+  ]);
 
   const setupLazyLoading = useCallback(() => {
     const handleInteraction = () => {
@@ -196,7 +213,18 @@ const UmamiAnalytics: React.FC<UmamiAnalyticsProps> = React.memo(props => {
       debugLog('Loading analytics script immediately');
       loadScript();
     }
-  }, [config.debug, config.url, config.websiteId, config.lazyLoad, config.onlyInProduction, debugLog, debugWarn, validateConfig, setupLazyLoading, loadScript]);
+  }, [
+    config.debug,
+    config.url,
+    config.websiteId,
+    config.lazyLoad,
+    config.onlyInProduction,
+    debugLog,
+    debugWarn,
+    validateConfig,
+    setupLazyLoading,
+    loadScript,
+  ]);
 
   return null;
 });
@@ -215,17 +243,19 @@ export interface PageviewData {
   [key: string]: any;
 }
 
-
 // eslint-disable-next-line no-unused-vars
 export type UTMFetcher = (utmId: string) => Promise<Partial<PageviewData>>;
 
 // Hook for programmatic event and pageview tracking
 export const useUmami = () => {
-  const track = useCallback((eventName: string, eventData?: Record<string, any>) => {
-    if (typeof window !== 'undefined' && (window as any).umami) {
-      (window as any).umami.track(eventName, eventData);
-    }
-  }, []);
+  const track = useCallback(
+    (eventName: string, eventData?: Record<string, any>) => {
+      if (typeof window !== 'undefined' && (window as any).umami) {
+        (window as any).umami.track(eventName, eventData);
+      }
+    },
+    []
+  );
 
   const trackPageview = useCallback((pageviewData?: PageviewData) => {
     if (typeof window !== 'undefined' && (window as any).umami) {
@@ -233,7 +263,9 @@ export const useUmami = () => {
         if (pageviewData && Object.keys(pageviewData).length > 0) {
           // For pageviews with custom data, call track with the data
           const data = {
-            url: pageviewData.url || window.location.pathname + window.location.search,
+            url:
+              pageviewData.url ||
+              window.location.pathname + window.location.search,
             title: pageviewData.title || document.title,
             referrer: pageviewData.referrer || document.referrer,
             ...pageviewData,
@@ -247,58 +279,81 @@ export const useUmami = () => {
     }
   }, []);
 
-  const trackPageviewAsync = useCallback(async (
-    utmId: string,
-    utmFetcher: UTMFetcher,
-    additionalData?: Partial<PageviewData>
-  ) => {
-    try {
-      const utmData = await utmFetcher(utmId);
+  const trackPageviewAsync = useCallback(
+    async (
+      utmId: string,
+      utmFetcher: UTMFetcher,
+      additionalData?: Partial<PageviewData>
+    ) => {
+      try {
+        const utmData = await utmFetcher(utmId);
+        const pageviewData: PageviewData = {
+          url: window.location.pathname + window.location.search,
+          title: document.title,
+          referrer: document.referrer,
+          utm_id: utmId,
+          ...utmData,
+          ...additionalData,
+        };
+
+        trackPageview(pageviewData);
+      } catch (error) {
+        console.error('[Umami Analytics] Error fetching UTM data:', error);
+        // Fallback to basic pageview tracking
+        trackPageview({
+          utm_id: utmId,
+          ...additionalData,
+        });
+      }
+    },
+    [trackPageview]
+  );
+
+  const trackPageviewWithUTM = useCallback(
+    (
+      utmParams: Partial<PageviewData>,
+      additionalData?: Partial<PageviewData>
+    ) => {
       const pageviewData: PageviewData = {
         url: window.location.pathname + window.location.search,
         title: document.title,
         referrer: document.referrer,
-        utm_id: utmId,
-        ...utmData,
+        ...utmParams,
         ...additionalData,
       };
-      
+
       trackPageview(pageviewData);
-    } catch (error) {
-      console.error('[Umami Analytics] Error fetching UTM data:', error);
-      // Fallback to basic pageview tracking
-      trackPageview({
-        utm_id: utmId,
-        ...additionalData,
-      });
-    }
-  }, [trackPageview]);
+    },
+    [trackPageview]
+  );
 
-  const trackPageviewWithUTM = useCallback((utmParams: Partial<PageviewData>, additionalData?: Partial<PageviewData>) => {
-    const pageviewData: PageviewData = {
-      url: window.location.pathname + window.location.search,
-      title: document.title,
-      referrer: document.referrer,
-      ...utmParams,
-      ...additionalData,
-    };
+  const identify = useCallback(
+    (idOrData: string | Record<string, any>, data?: Record<string, any>) => {
+      if (typeof window !== 'undefined' && (window as any).umami) {
+        if (typeof idOrData === 'string') {
+          if (data) {
+            (window as any).umami.identify(idOrData, data);
+          } else {
+            (window as any).umami.identify(idOrData);
+          }
+        } else {
+          (window as any).umami.identify(idOrData);
+        }
+      }
+    },
+    []
+  );
 
-    trackPageview(pageviewData);
-  }, [trackPageview]);
-
-  const identify = useCallback((uniqueId: string) => {
-    if (typeof window !== 'undefined' && (window as any).umami) {
-      (window as any).umami.identify(uniqueId);
-    }
-  }, []);
-
-  return useMemo(() => ({
-    track,
-    trackPageview,
-    trackPageviewAsync,
-    trackPageviewWithUTM,
-    identify
-  }), [track, trackPageview, trackPageviewAsync, trackPageviewWithUTM, identify]);
+  return useMemo(
+    () => ({
+      track,
+      trackPageview,
+      trackPageviewAsync,
+      trackPageviewWithUTM,
+      identify,
+    }),
+    [track, trackPageview, trackPageviewAsync, trackPageviewWithUTM, identify]
+  );
 };
 
 export default UmamiAnalytics;
