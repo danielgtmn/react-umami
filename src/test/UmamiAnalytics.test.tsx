@@ -22,14 +22,17 @@ function TestComponent() {
 
   return (
     <div>
-      <button type="button" onClick={handleClick}>Track Event</button>
+      <button type="button" onClick={handleClick}>
+        Track Event
+      </button>
     </div>
   );
 }
 
 // Test component for pageview tracking
 function PageviewTestComponent() {
-  const { trackPageview, trackPageviewAsync, trackPageviewWithUTM } = useUmami();
+  const { trackPageview, trackPageviewAsync, trackPageviewWithUTM } =
+    useUmami();
 
   const handlePageview = () => {
     trackPageview({ url: '/test-page', title: 'Test Page' });
@@ -58,9 +61,15 @@ function PageviewTestComponent() {
 
   return (
     <div>
-      <button type="button" onClick={handlePageview}>Track Pageview</button>
-      <button type="button" onClick={handlePageviewWithUTM}>Track Pageview with UTM</button>
-      <button type="button" onClick={handleAsyncPageview}>Track Async Pageview</button>
+      <button type="button" onClick={handlePageview}>
+        Track Pageview
+      </button>
+      <button type="button" onClick={handlePageviewWithUTM}>
+        Track Pageview with UTM
+      </button>
+      <button type="button" onClick={handleAsyncPageview}>
+        Track Async Pageview
+      </button>
     </div>
   );
 }
@@ -73,8 +82,26 @@ function IdentifyTestComponent() {
     identify('user-123');
   };
 
+  const handleIdentifyWithData = () => {
+    identify('user-456', { email: 'test@example.com', role: 'admin' });
+  };
+
+  const handleIdentifyObject = () => {
+    identify({ name: 'John Doe', tenantId: 'tenant-123' });
+  };
+
   return (
-    <button type="button" onClick={handleIdentify}>Identify User</button>
+    <div>
+      <button type="button" onClick={handleIdentify}>
+        Identify User
+      </button>
+      <button type="button" onClick={handleIdentifyWithData}>
+        Identify With Data
+      </button>
+      <button type="button" onClick={handleIdentifyObject}>
+        Identify Object
+      </button>
+    </div>
   );
 }
 
@@ -116,7 +143,9 @@ describe('UmamiAnalytics', () => {
     });
 
     it('renders nothing to DOM', () => {
-      const { container } = render(<UmamiAnalytics url="https://test.com" websiteId="test-id" />);
+      const { container } = render(
+        <UmamiAnalytics url="https://test.com" websiteId="test-id" />
+      );
       expect(container.firstChild).toBeNull();
     });
   });
@@ -126,7 +155,9 @@ describe('UmamiAnalytics', () => {
       render(<UmamiAnalytics url="https://test.com" websiteId="test-id" />);
 
       await waitFor(() => {
-        const script = document.querySelector('script[src="https://test.com/script.js"]');
+        const script = document.querySelector(
+          'script[src="https://test.com/script.js"]'
+        );
         expect(script).toBeInTheDocument();
         expect(script?.getAttribute('data-website-id')).toBe('test-id');
         expect(script?.getAttribute('defer')).toBe('');
@@ -141,7 +172,9 @@ describe('UmamiAnalytics', () => {
 
       render(<UmamiAnalytics url="https://test.com" websiteId="test-id" />);
 
-      const script = document.querySelector('script[src="https://test.com/script.js"]');
+      const script = document.querySelector(
+        'script[src="https://test.com/script.js"]'
+      );
       expect(script).not.toBeInTheDocument();
     });
 
@@ -151,10 +184,18 @@ describe('UmamiAnalytics', () => {
         value: { ...process.env, NODE_ENV: 'development' },
       });
 
-      render(<UmamiAnalytics url="https://test.com" websiteId="test-id" onlyInProduction={false} />);
+      render(
+        <UmamiAnalytics
+          url="https://test.com"
+          websiteId="test-id"
+          onlyInProduction={false}
+        />
+      );
 
       await waitFor(() => {
-        const script = document.querySelector('script[src="https://test.com/script.js"]');
+        const script = document.querySelector(
+          'script[src="https://test.com/script.js"]'
+        );
         expect(script).toBeInTheDocument();
       });
     });
@@ -174,7 +215,9 @@ describe('UmamiAnalytics', () => {
       render(<UmamiAnalytics />);
 
       await waitFor(() => {
-        const script = document.querySelector('script[src="https://env-test.com/script.js"]');
+        const script = document.querySelector(
+          'script[src="https://env-test.com/script.js"]'
+        );
         expect(script).toBeInTheDocument();
         expect(script?.getAttribute('data-website-id')).toBe('env-test-id');
       });
@@ -190,10 +233,17 @@ describe('UmamiAnalytics', () => {
         },
       });
 
-      render(<UmamiAnalytics url="https://props-test.com" websiteId="props-test-id" />);
+      render(
+        <UmamiAnalytics
+          url="https://props-test.com"
+          websiteId="props-test-id"
+        />
+      );
 
       await waitFor(() => {
-        const script = document.querySelector('script[src="https://props-test.com/script.js"]');
+        const script = document.querySelector(
+          'script[src="https://props-test.com/script.js"]'
+        );
         expect(script).toBeInTheDocument();
         expect(script?.getAttribute('data-website-id')).toBe('props-test-id');
       });
@@ -213,8 +263,12 @@ describe('UmamiAnalytics', () => {
       );
 
       await waitFor(() => {
-        const script = document.querySelector('script[src="https://test.com/script.js"]');
-        expect(script?.getAttribute('data-domains')).toBe('example.com,app.example.com');
+        const script = document.querySelector(
+          'script[src="https://test.com/script.js"]'
+        );
+        expect(script?.getAttribute('data-domains')).toBe(
+          'example.com,app.example.com'
+        );
       });
     });
   });
@@ -235,7 +289,9 @@ describe('UmamiAnalytics', () => {
       );
 
       await waitFor(() => {
-        const script = document.querySelector('script[src="https://test.com/script.js"]');
+        const script = document.querySelector(
+          'script[src="https://test.com/script.js"]'
+        );
         expect(script?.getAttribute('data-cache')).toBe('true');
         expect(script?.getAttribute('data-custom')).toBe('value');
       });
@@ -244,22 +300,38 @@ describe('UmamiAnalytics', () => {
 
   describe('Lazy Loading', () => {
     it('does not load script immediately when lazyLoad is true', () => {
-      render(<UmamiAnalytics url="https://test.com" websiteId="test-id" lazyLoad={true} />);
+      render(
+        <UmamiAnalytics
+          url="https://test.com"
+          websiteId="test-id"
+          lazyLoad={true}
+        />
+      );
 
-      const script = document.querySelector('script[src="https://test.com/script.js"]');
+      const script = document.querySelector(
+        'script[src="https://test.com/script.js"]'
+      );
       expect(script).not.toBeInTheDocument();
     });
 
     it('loads script on user interaction when lazyLoad is true', async () => {
       const user = userEvent.setup();
 
-      render(<UmamiAnalytics url="https://test.com" websiteId="test-id" lazyLoad={true} />);
+      render(
+        <UmamiAnalytics
+          url="https://test.com"
+          websiteId="test-id"
+          lazyLoad={true}
+        />
+      );
 
       // Trigger user interaction
       await user.click(document.body);
 
       await waitFor(() => {
-        const script = document.querySelector('script[src="https://test.com/script.js"]');
+        const script = document.querySelector(
+          'script[src="https://test.com/script.js"]'
+        );
         expect(script).toBeInTheDocument();
       });
     });
@@ -307,7 +379,9 @@ describe('UmamiAnalytics', () => {
       const button = screen.getByRole('button', { name: /track event/i });
       await user.click(button);
 
-      expect(mockUmami.track).toHaveBeenCalledWith('test-event', { key: 'value' });
+      expect(mockUmami.track).toHaveBeenCalledWith('test-event', {
+        key: 'value',
+      });
     });
 
     it('handles missing window.umami gracefully', () => {
@@ -327,9 +401,15 @@ describe('UmamiAnalytics', () => {
     it('provides pageview tracking functions', () => {
       render(<PageviewTestComponent />);
 
-      const pageviewButton = screen.getByRole('button', { name: /track pageview$/i });
-      const utmButton = screen.getByRole('button', { name: /track pageview with utm/i });
-      const asyncButton = screen.getByRole('button', { name: /track async pageview/i });
+      const pageviewButton = screen.getByRole('button', {
+        name: /track pageview$/i,
+      });
+      const utmButton = screen.getByRole('button', {
+        name: /track pageview with utm/i,
+      });
+      const asyncButton = screen.getByRole('button', {
+        name: /track async pageview/i,
+      });
 
       expect(pageviewButton).toBeInTheDocument();
       expect(utmButton).toBeInTheDocument();
@@ -356,14 +436,18 @@ describe('UmamiAnalytics', () => {
 
       render(<PageviewTestComponent />);
 
-      const button = screen.getByRole('button', { name: /track pageview with utm/i });
+      const button = screen.getByRole('button', {
+        name: /track pageview with utm/i,
+      });
       await user.click(button);
 
-      expect(mockUmami.track).toHaveBeenCalledWith(expect.objectContaining({
-        utm_source: 'test-source',
-        utm_medium: 'test-medium',
-        utm_campaign: 'test-campaign',
-      }));
+      expect(mockUmami.track).toHaveBeenCalledWith(
+        expect.objectContaining({
+          utm_source: 'test-source',
+          utm_medium: 'test-medium',
+          utm_campaign: 'test-campaign',
+        })
+      );
     });
 
     it('handles async UTM fetching with trackPageviewAsync', async () => {
@@ -371,23 +455,29 @@ describe('UmamiAnalytics', () => {
 
       render(<PageviewTestComponent />);
 
-      const button = screen.getByRole('button', { name: /track async pageview/i });
+      const button = screen.getByRole('button', {
+        name: /track async pageview/i,
+      });
       await user.click(button);
 
       // Wait for async operation to complete
       await waitFor(() => {
-        expect(mockUmami.track).toHaveBeenCalledWith(expect.objectContaining({
-          utm_id: 'test-utm-id',
-          utm_source: 'backend-source',
-          utm_medium: 'backend-medium',
-          utm_campaign: 'backend-campaign',
-        }));
+        expect(mockUmami.track).toHaveBeenCalledWith(
+          expect.objectContaining({
+            utm_id: 'test-utm-id',
+            utm_source: 'backend-source',
+            utm_medium: 'backend-medium',
+            utm_campaign: 'backend-campaign',
+          })
+        );
       });
     });
 
     it('handles UTM fetcher errors gracefully', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
       const FailingPageviewComponent = () => {
         const { trackPageviewAsync } = useUmami();
 
@@ -396,27 +486,38 @@ describe('UmamiAnalytics', () => {
             throw new Error('Network error');
           };
 
-          await trackPageviewAsync('test-utm-id', failingFetcher, { title: 'Fallback Page' });
+          await trackPageviewAsync('test-utm-id', failingFetcher, {
+            title: 'Fallback Page',
+          });
         };
 
         return (
           // biome-ignore lint/a11y/useButtonType: test button
-<button type="button" onClick={handleFailingAsync}>Track Failing Async</button>
+          <button type="button" onClick={handleFailingAsync}>
+            Track Failing Async
+          </button>
         );
       };
 
       const user = userEvent.setup();
       render(<FailingPageviewComponent />);
 
-      const button = screen.getByRole('button', { name: /track failing async/i });
+      const button = screen.getByRole('button', {
+        name: /track failing async/i,
+      });
       await user.click(button);
 
       await waitFor(() => {
-        expect(consoleSpy).toHaveBeenCalledWith('[Umami Analytics] Error fetching UTM data:', expect.any(Error));
-        expect(mockUmami.track).toHaveBeenCalledWith(expect.objectContaining({
-          utm_id: 'test-utm-id',
-          title: 'Fallback Page',
-        }));
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[Umami Analytics] Error fetching UTM data:',
+          expect.any(Error)
+        );
+        expect(mockUmami.track).toHaveBeenCalledWith(
+          expect.objectContaining({
+            utm_id: 'test-utm-id',
+            title: 'Fallback Page',
+          })
+        );
       });
 
       consoleSpy.mockRestore();
@@ -431,14 +532,18 @@ describe('UmamiAnalytics', () => {
         };
 
         return (
-          <button type="button" onClick={handleSimplePageview}>Track Simple Pageview</button>
+          <button type="button" onClick={handleSimplePageview}>
+            Track Simple Pageview
+          </button>
         );
       };
 
       const user = userEvent.setup();
       render(<SimplePageviewComponent />);
 
-      const button = screen.getByRole('button', { name: /track simple pageview/i });
+      const button = screen.getByRole('button', {
+        name: /track simple pageview/i,
+      });
       await user.click(button);
 
       expect(mockUmami.track).toHaveBeenCalledWith();
@@ -456,7 +561,9 @@ describe('UmamiAnalytics', () => {
         };
 
         return (
-          <button type="button" onClick={handleSafePageview}>Track Safe Pageview</button>
+          <button type="button" onClick={handleSafePageview}>
+            Track Safe Pageview
+          </button>
         );
       };
 
@@ -473,7 +580,7 @@ describe('UmamiAnalytics', () => {
     it('provides identify function', () => {
       render(<IdentifyTestComponent />);
 
-      const button = screen.getByRole('button', { name: /identify user/i });
+      const button = screen.getByRole('button', { name: /identify user$/i });
       expect(button).toBeInTheDocument();
     });
 
@@ -482,10 +589,40 @@ describe('UmamiAnalytics', () => {
 
       render(<IdentifyTestComponent />);
 
-      const button = screen.getByRole('button', { name: /identify user/i });
+      const button = screen.getByRole('button', { name: /identify user$/i });
       await user.click(button);
 
       expect(mockUmami.identify).toHaveBeenCalledWith('user-123');
+    });
+
+    it('calls window.umami.identify with string and data object', async () => {
+      const user = userEvent.setup();
+
+      render(<IdentifyTestComponent />);
+
+      const button = screen.getByRole('button', {
+        name: /identify with data/i,
+      });
+      await user.click(button);
+
+      expect(mockUmami.identify).toHaveBeenCalledWith('user-456', {
+        email: 'test@example.com',
+        role: 'admin',
+      });
+    });
+
+    it('calls window.umami.identify with object only', async () => {
+      const user = userEvent.setup();
+
+      render(<IdentifyTestComponent />);
+
+      const button = screen.getByRole('button', { name: /identify object/i });
+      await user.click(button);
+
+      expect(mockUmami.identify).toHaveBeenCalledWith({
+        name: 'John Doe',
+        tenantId: 'tenant-123',
+      });
     });
 
     it('handles missing window.umami gracefully for identify', () => {
@@ -500,7 +637,9 @@ describe('UmamiAnalytics', () => {
         };
 
         return (
-          <button type="button" onClick={handleSafeIdentify}>Safe Identify</button>
+          <button type="button" onClick={handleSafeIdentify}>
+            Safe Identify
+          </button>
         );
       };
 
